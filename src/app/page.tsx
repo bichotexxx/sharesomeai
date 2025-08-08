@@ -3,333 +3,190 @@
 import { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
-import CharacterCard from '@/components/CharacterCard';
-import HeroBanner from '@/components/HeroBanner';
-import { HeartIcon, ShareIcon, ChatBubbleLeftIcon, StarIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { HeartIcon, StarIcon, ChatBubbleLeftIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
 import toast from 'react-hot-toast';
 
-interface CivitAICharacter {
+interface Character {
   id: number;
   name: string;
-  description: string;
+  age: string;
   imageUrl: string;
-  prompt: string;
-  negativePrompt: string;
-  modelName: string;
-  creator: string;
-  tags: string[];
-  stats?: {
-    downloadCount: number;
-    rating: number;
-    ratingCount: number;
-  };
+  description: string;
 }
 
-const features = [
+const featuredCharacters: Character[] = [
   {
-    name: 'Unlimited Characters',
-    description: 'Create as many AI characters as you want, completely free',
+    id: 1,
+    name: 'Fiona',
+    age: '18 years',
+    imageUrl: '/characters/fiona.jpg',
+    description: 'A mysterious elf from the enchanted forest'
   },
   {
-    name: 'Unrestricted Chat',
-    description: 'Chat with any character without message limits',
+    id: 2,
+    name: 'Kendall Parker',
+    age: '24 years',
+    imageUrl: '/characters/kendall.jpg',
+    description: 'A charismatic adventurer with a hidden past'
   },
   {
-    name: 'Full Resolution',
-    description: 'Download images in full quality, no watermarks',
+    id: 3,
+    name: 'Bella Dolphins',
+    age: '25 years',
+    imageUrl: '/characters/bella.jpg',
+    description: 'An angelic being with a fiery spirit'
   },
   {
-    name: 'All Styles Available',
-    description: 'Access to all art styles and character customization options',
-  },
+    id: 4,
+    name: 'Ariella Martinez',
+    age: '22 years',
+    imageUrl: '/characters/ariella.jpg',
+    description: 'A skilled ninja with a calm demeanor'
+  }
 ];
 
 export default function Home() {
-  const [civitaiCharacters, setCivitaiCharacters] = useState<CivitAICharacter[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [favorites, setFavorites] = useState<number[]>([]);
 
-  useEffect(() => {
-    fetchCivitAICharacters();
-  }, []);
-
-  const fetchCivitAICharacters = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch('/api/civitai/characters?limit=12');
-      const data = await response.json();
-
-      if (data.success) {
-        setCivitaiCharacters(data.characters);
-      } else {
-        console.error('Failed to fetch CivitAI characters');
-        setCivitaiCharacters(getFallbackCharacters());
-      }
-    } catch (error) {
-      console.error('Error fetching CivitAI characters:', error);
-      setCivitaiCharacters(getFallbackCharacters());
-    } finally {
-      setLoading(false);
-    }
+  const toggleFavorite = (characterId: number) => {
+    setFavorites(prev => 
+      prev.includes(characterId) 
+        ? prev.filter(id => id !== characterId)
+        : [...prev, characterId]
+    );
+    toast.success(favorites.includes(characterId) ? 'Removed from favorites' : 'Added to favorites');
   };
 
-  const getFallbackCharacters = (): CivitAICharacter[] => [
-    {
-      id: 1,
-      name: 'Luna',
-      imageUrl: '/characters/luna.jpg',
-      description: 'A mysterious elf from the enchanted forest.',
-      prompt: 'beautiful elf, long hair, fantasy, high quality',
-      negativePrompt: 'low quality, blurry',
-      modelName: 'Fantasy Character',
-      creator: 'AI Artist',
-      tags: ['fantasy', 'elf', 'beautiful'],
-    },
-    {
-      id: 2,
-      name: 'Max',
-      imageUrl: '/characters/max.jpg',
-      description: 'A charismatic adventurer with a hidden past.',
-      prompt: 'handsome adventurer, rugged, charismatic',
-      negativePrompt: 'low quality, blurry',
-      modelName: 'Adventure Character',
-      creator: 'AI Artist',
-      tags: ['adventure', 'handsome', 'rugged'],
-    },
-    {
-      id: 3,
-      name: 'Seraphina',
-      imageUrl: '/characters/seraphina.jpg',
-      description: 'An angelic being with a fiery spirit.',
-      prompt: 'angelic being, beautiful, ethereal, wings',
-      negativePrompt: 'low quality, blurry',
-      modelName: 'Divine Character',
-      creator: 'AI Artist',
-      tags: ['angelic', 'beautiful', 'ethereal'],
-    },
-    {
-      id: 4,
-      name: 'Kaito',
-      imageUrl: '/characters/kaito.jpg',
-      description: 'A skilled ninja with a calm demeanor.',
-      prompt: 'ninja warrior, skilled, calm, mysterious',
-      negativePrompt: 'low quality, blurry',
-      modelName: 'Ninja Character',
-      creator: 'AI Artist',
-      tags: ['ninja', 'warrior', 'mysterious'],
-    },
-    {
-      id: 5,
-      name: 'Elara',
-      imageUrl: '/characters/elara.jpg',
-      description: 'A wise sorceress with ancient knowledge.',
-      prompt: 'wise sorceress, magical, ancient knowledge',
-      negativePrompt: 'low quality, blurry',
-      modelName: 'Magic Character',
-      creator: 'AI Artist',
-      tags: ['sorceress', 'magical', 'wise'],
-    },
-    {
-      id: 6,
-      name: 'Jax',
-      imageUrl: '/characters/jax.jpg',
-      description: 'A rugged mercenary with a heart of gold.',
-      prompt: 'rugged mercenary, tough, heart of gold',
-      negativePrompt: 'low quality, blurry',
-      modelName: 'Mercenary Character',
-      creator: 'AI Artist',
-      tags: ['mercenary', 'rugged', 'tough'],
-    },
-  ];
-
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) {
-      fetchCivitAICharacters();
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const response = await fetch(`/api/civitai/characters?query=${encodeURIComponent(searchQuery)}&limit=12`);
-      const data = await response.json();
-
-      if (data.success) {
-        setCivitaiCharacters(data.characters);
-      } else {
-        toast.error('No characters found for your search');
-      }
-    } catch (error) {
-      console.error('Error searching characters:', error);
-      toast.error('Error searching characters');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const shareCharacter = async (character: CivitAICharacter) => {
-    try {
-      const shareData = {
-        title: `Check out ${character.name} on CloneSome AI`,
-        text: character.description,
-        url: `${window.location.origin}/characters/${character.id}`,
-      };
-
-      if (navigator.share) {
-        await navigator.share(shareData);
-      } else {
-        await navigator.clipboard.writeText(shareData.url);
-        toast.success('Character link copied to clipboard!');
-      }
-    } catch (error) {
-      console.error('Error sharing:', error);
-      toast.error('Error sharing character');
-    }
-  };
-
-  const startChat = (character: CivitAICharacter) => {
+  const startChat = (character: Character) => {
     window.location.href = `/chat?character=${character.id}`;
   };
 
+  const createCharacter = () => {
+    window.location.href = '/create';
+  };
+
   return (
-    <div className="min-h-screen bg-dark-100">
+    <div className="min-h-screen bg-white">
       <Sidebar />
       <Header />
       
-      <main className="pl-16 pt-16">
-        <HeroBanner />
-        
-        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-          <div className="flex flex-col gap-8">
-            {/* Features Section */}
-            <section className="py-8">
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                {features.map((feature) => (
-                  <div
-                    key={feature.name}
-                    className="rounded-lg bg-dark-200 p-6 hover:bg-dark-300 transition-colors"
-                  >
-                    <h3 className="text-lg font-semibold text-white">{feature.name}</h3>
-                    <p className="mt-2 text-sm text-dark-600">{feature.description}</p>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {/* Characters Section */}
-            <section>
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-                <div>
-                  <h2 className="text-2xl font-bold text-white">Popular AI Characters</h2>
-                  <p className="text-dark-600 mt-1">Discover amazing AI characters from CivitAI</p>
+      <main className="pl-64 pt-16">
+        {/* Hero Banner */}
+        <section className="relative bg-gradient-to-r from-pink-400 to-red-500 px-8 py-12">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <div className="inline-block bg-pink-500 text-white text-xs px-3 py-1 rounded-full mb-4">
+                  Initial Launch Offer
                 </div>
                 
-                <div className="flex items-center space-x-2 mt-4 sm:mt-0">
-                  <div className="relative">
-                    <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-dark-500" />
-                    <input
-                      type="text"
-                      placeholder="Search characters..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                      className="pl-10 rounded-md border-0 bg-dark-200 px-3 py-2 text-white placeholder:text-dark-500 focus:ring-2 focus:ring-pink-500"
-                    />
-                  </div>
-                  <button
-                    onClick={handleSearch}
-                    className="rounded-md bg-pink-500 px-4 py-2 text-white hover:bg-pink-600 transition-colors"
+                <h1 className="text-4xl font-bold text-white mb-4">
+                  Create your own <span className="text-pink-200">AI Character</span>
+                </h1>
+                
+                <p className="text-white/90 text-lg mb-8 max-w-2xl">
+                  Introducing Sharesome AI: Your ultimate AI Character Creator. Customize personalities, clothes and more to create your personal and unique Sharesome AI character, you can chat and interact with.
+                </p>
+                
+                <div className="flex space-x-4">
+                  <button 
+                    onClick={createCharacter}
+                    className="bg-pink-500 hover:bg-pink-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
                   >
-                    Search
+                    Create AI Character
+                  </button>
+                  <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors">
+                    Start Chatting
                   </button>
                 </div>
               </div>
+              
+              <div className="flex-1 flex justify-end space-x-4">
+                <div className="relative">
+                  <img 
+                    src="/characters/hero-1.jpg" 
+                    alt="AI Character" 
+                    className="w-48 h-64 object-cover rounded-lg"
+                  />
+                </div>
+                <div className="relative">
+                  <img 
+                    src="/characters/hero-2.jpg" 
+                    alt="AI Character" 
+                    className="w-48 h-64 object-cover rounded-lg"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="absolute top-4 right-8">
+            <button className="bg-pink-500 hover:bg-pink-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors">
+              Get up to 50% OFF
+            </button>
+          </div>
+        </section>
 
-              {loading ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="text-center">
-                    <div className="h-8 w-8 animate-spin rounded-full border-2 border-pink-500 border-t-transparent mx-auto mb-4"></div>
-                    <p className="text-white">Loading characters...</p>
+        {/* Featured Characters Section */}
+        <section className="px-8 py-12">
+          <div className="max-w-7xl mx-auto">
+            <h2 className="text-3xl font-bold text-gray-900 mb-8">
+              Explore our best <span className="text-pink-500">AI Characters</span>
+            </h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {featuredCharacters.map((character) => (
+                <div key={character.id} className="bg-white rounded-lg shadow-lg overflow-hidden group">
+                  <div className="relative">
+                    <img 
+                      src={character.imageUrl} 
+                      alt={character.name}
+                      className="w-full h-64 object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                    
+                    {/* Action buttons */}
+                    <div className="absolute top-2 right-2 flex space-x-2">
+                      <button
+                        onClick={() => toggleFavorite(character.id)}
+                        className="bg-pink-500 hover:bg-pink-600 text-white p-2 rounded-full transition-colors"
+                        title="Add to favorites"
+                      >
+                        {favorites.includes(character.id) ? (
+                          <HeartSolidIcon className="h-4 w-4" />
+                        ) : (
+                          <HeartIcon className="h-4 w-4" />
+                        )}
+                      </button>
+                      <button 
+                        className="bg-white hover:bg-gray-100 text-gray-700 p-2 rounded-full transition-colors"
+                        title="Rate character"
+                      >
+                        <StarIcon className="h-4 w-4" />
+                      </button>
+                    </div>
+                    
+                    {/* Chat button */}
+                    <div className="absolute bottom-2 right-2">
+                      <button
+                        onClick={() => startChat(character)}
+                        className="bg-pink-500 hover:bg-pink-600 text-white p-2 rounded-full transition-colors"
+                        title="Chat with character"
+                      >
+                        <ChatBubbleLeftIcon className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="p-4">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-1">{character.name}</h3>
+                    <p className="text-sm text-gray-600">{character.age}</p>
                   </div>
                 </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                  {civitaiCharacters.map((character) => (
-                    <div key={character.id} className="group relative overflow-hidden rounded-lg bg-dark-200">
-                      <div className="aspect-h-4 aspect-w-3 relative">
-                        <img
-                          src={character.imageUrl}
-                          alt={character.name}
-                          className="object-cover transition-transform duration-300 group-hover:scale-110"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                      </div>
-                      
-                      <div className="absolute bottom-0 left-0 right-0 p-4">
-                        <h3 className="text-lg font-semibold text-white mb-1">{character.name}</h3>
-                        <p className="text-sm text-white/80 mb-2 line-clamp-2">
-                          {character.description}
-                        </p>
-                        
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center space-x-1 text-yellow-400">
-                            <StarIcon className="h-4 w-4" />
-                            <span className="text-xs text-white">
-                              {character.stats?.rating?.toFixed(1) || '4.5'}
-                            </span>
-                          </div>
-                          <div className="text-xs text-white/60">
-                            by {character.creator}
-                          </div>
-                        </div>
-                        
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
-                            <button
-                              className="flex items-center space-x-1 text-white hover:text-pink-500 transition-colors"
-                              title="Add to favorites"
-                            >
-                              <HeartIcon className="h-4 w-4" />
-                            </button>
-                          </div>
-                          
-                          <div className="flex items-center space-x-2">
-                            <button
-                              onClick={() => startChat(character)}
-                              className="rounded-full bg-pink-500 p-2 text-white hover:bg-pink-600 transition-colors"
-                              title="Chat with character"
-                            >
-                              <ChatBubbleLeftIcon className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={() => shareCharacter(character)}
-                              className="rounded-full bg-dark-300 p-2 text-white hover:bg-dark-400 transition-colors"
-                              title="Share character"
-                            >
-                              <ShareIcon className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {!loading && civitaiCharacters.length === 0 && (
-                <div className="text-center py-12">
-                  <p className="text-dark-600 mb-4">No characters found</p>
-                  <button
-                    onClick={fetchCivitAICharacters}
-                    className="rounded-md bg-pink-500 px-6 py-2 text-sm font-semibold text-white hover:bg-pink-400"
-                  >
-                    Load More Characters
-                  </button>
-                </div>
-              )}
-            </section>
+              ))}
+            </div>
           </div>
-        </div>
+        </section>
       </main>
     </div>
   );
